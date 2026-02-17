@@ -25,6 +25,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ============================================================
 
 let meals = [];          // All meals, persisted
+let customProducts = []; // User's custom products
 let currentPreview = null; // Preview of meal being entered
 let editingMealId = null;  // ID of meal being edited
 let previewGeneration = 0; // Cancellation counter for async preview
@@ -109,7 +110,7 @@ function initAuthEvents() {
       }
 
       // Authenticated
-      await loadMeals();
+      await Promise.all([loadMeals(), loadCustomProducts()]);
       showApp();
       renderLogView();
     } finally {
@@ -125,6 +126,7 @@ function initAuthEvents() {
   document.getElementById('logout-btn').addEventListener('click', async () => {
     await sb.auth.signOut();
     meals = [];
+    customProducts = [];
     currentPreview = null;
     editingMealId = null;
     showAuthScreen();
@@ -204,6 +206,88 @@ async function deleteMeal(mealId) {
 }
 
 // ============================================================
+// Custom Products Persistence
+// ============================================================
+
+async function loadCustomProducts() {
+  const { data, error } = await sb
+    .from('custom_products')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Failed to load custom products:', error.message);
+    customProducts = [];
+    return;
+  }
+
+  customProducts = data.map(row => ({
+    id: row.id,
+    product_name: row.product_name,
+    serving_size: row.serving_size,
+    calories: Number(row.calories),
+    protein: Number(row.protein),
+    carbs: Number(row.carbs),
+    fat: Number(row.fat),
+    fiber: Number(row.fiber),
+    sodium: Number(row.sodium),
+    created_at: row.created_at,
+  }));
+}
+
+async function insertCustomProduct(product) {
+  const { error } = await sb.from('custom_products').insert({
+    id: product.id,
+    product_name: product.product_name,
+    serving_size: product.serving_size,
+    calories: product.calories,
+    protein: product.protein,
+    carbs: product.carbs,
+    fat: product.fat,
+    fiber: product.fiber,
+    sodium: product.sodium,
+  });
+
+  if (error) {
+    console.error('Failed to save custom product:', error.message);
+    showToast('Failed to save product');
+    return false;
+  }
+  return true;
+}
+
+async function updateCustomProduct(product) {
+  const { error } = await sb.from('custom_products').update({
+    product_name: product.product_name,
+    serving_size: product.serving_size,
+    calories: product.calories,
+    protein: product.protein,
+    carbs: product.carbs,
+    fat: product.fat,
+    fiber: product.fiber,
+    sodium: product.sodium,
+  }).eq('id', product.id);
+
+  if (error) {
+    console.error('Failed to update custom product:', error.message);
+    showToast('Failed to update product');
+    return false;
+  }
+  return true;
+}
+
+async function deleteCustomProduct(productId) {
+  const { error } = await sb.from('custom_products').delete().eq('id', productId);
+
+  if (error) {
+    console.error('Failed to delete custom product:', error.message);
+    showToast('Failed to delete product');
+    return false;
+  }
+  return true;
+}
+
+// ============================================================
 // Utilities
 // ============================================================
 
@@ -270,6 +354,7 @@ function switchView(viewName) {
   if (viewName === 'history') renderHistory();
   if (viewName === 'recommendations') renderRecommendations();
   if (viewName === 'log') renderLogView();
+  if (viewName === 'custom') renderCustomProducts();
 }
 
 // ============================================================
@@ -413,6 +498,7 @@ async function previewMeal() {
 function sourceClass(source) {
   if (!source) return 'source-estimated';
   const s = source.toLowerCase();
+  if (s === 'custom') return 'source-custom';
   if (s.includes('open food')) return 'source-off';
   if (s.includes('usda')) return 'source-usda';
   return 'source-estimated';
@@ -843,6 +929,129 @@ function buildPreferences() {
 }
 
 // ============================================================
+// Custom Products Management
+// ============================================================
+
+function renderCustomProducts() {
+  const container = document.getElementById('custom-products-list');
+
+  if (customProducts.length === 0) {
+    container.innerHTML = '<p class="empty-state">No custom products yet. Add your first one!</p>';
+    return;
+  }
+
+  container.innerHTML = customProducts.map(p => `
+    <div class="cp-card" data-id="${p.id}">
+      <div class="cp-card-header">
+        <div>
+          <div class="cp-card-name">${escapeHTML(p.product_name)}</div>
+          <div class="cp-card-serving">${escapeHTML(p.serving_size)}</div>
+        </div>
+        <div class="cp-card-actions">
+          <button class="cp-edit-btn btn btn-secondary btn-sm" data-id="${p.id}">Edit</button>
+          <button class="cp-delete-btn btn btn-danger btn-sm" data-id="${p.id}">Delete</button>
+        </div>
+      </div>
+      <div class="cp-card-macros">
+        <span class="macro-tag cal">${Math.round(p.calories)} cal</span>
+        <span class="macro-tag pro">${Math.round(p.protein * 10) / 10}g P</span>
+        <span class="macro-tag carb">${Math.round(p.carbs * 10) / 10}g C</span>
+        <span class="macro-tag fat">${Math.round(p.fat * 10) / 10}g F</span>
+        <span class="macro-tag fib">${Math.round(p.fiber * 10) / 10}g Fib</span>
+        <span class="macro-tag sod">${Math.round(p.sodium)}mg Na</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showCustomProductForm(product) {
+  const form = document.getElementById('custom-product-form');
+  const title = document.getElementById('custom-form-title');
+
+  if (product) {
+    title.textContent = 'Edit Custom Product';
+    document.getElementById('cp-edit-id').value = product.id;
+    document.getElementById('cp-name').value = product.product_name;
+    document.getElementById('cp-serving').value = product.serving_size;
+    document.getElementById('cp-calories').value = product.calories;
+    document.getElementById('cp-protein').value = product.protein;
+    document.getElementById('cp-carbs').value = product.carbs;
+    document.getElementById('cp-fat').value = product.fat;
+    document.getElementById('cp-fiber').value = product.fiber;
+    document.getElementById('cp-sodium').value = product.sodium;
+  } else {
+    title.textContent = 'Add Custom Product';
+    document.getElementById('cp-edit-id').value = '';
+    document.getElementById('cp-name').value = '';
+    document.getElementById('cp-serving').value = '1 serving';
+    document.getElementById('cp-calories').value = '0';
+    document.getElementById('cp-protein').value = '0';
+    document.getElementById('cp-carbs').value = '0';
+    document.getElementById('cp-fat').value = '0';
+    document.getElementById('cp-fiber').value = '0';
+    document.getElementById('cp-sodium').value = '0';
+  }
+
+  form.classList.remove('hidden');
+  document.getElementById('cp-name').focus();
+}
+
+function hideCustomProductForm() {
+  document.getElementById('custom-product-form').classList.add('hidden');
+}
+
+async function saveCustomProduct() {
+  const name = document.getElementById('cp-name').value.trim();
+  if (!name) {
+    showToast('Product name is required');
+    return;
+  }
+
+  const editId = document.getElementById('cp-edit-id').value;
+  const productData = {
+    product_name: name,
+    serving_size: document.getElementById('cp-serving').value.trim() || '1 serving',
+    calories: parseFloat(document.getElementById('cp-calories').value) || 0,
+    protein: parseFloat(document.getElementById('cp-protein').value) || 0,
+    carbs: parseFloat(document.getElementById('cp-carbs').value) || 0,
+    fat: parseFloat(document.getElementById('cp-fat').value) || 0,
+    fiber: parseFloat(document.getElementById('cp-fiber').value) || 0,
+    sodium: parseFloat(document.getElementById('cp-sodium').value) || 0,
+  };
+
+  if (editId) {
+    // Update existing
+    const product = { id: editId, ...productData };
+    const ok = await updateCustomProduct(product);
+    if (!ok) return;
+
+    const idx = customProducts.findIndex(p => p.id === editId);
+    if (idx !== -1) customProducts[idx] = product;
+    showToast('Product updated!');
+  } else {
+    // Insert new
+    const product = { id: generateId(), ...productData };
+    const ok = await insertCustomProduct(product);
+    if (!ok) return;
+
+    customProducts.unshift(product);
+    showToast('Product added!');
+  }
+
+  hideCustomProductForm();
+  renderCustomProducts();
+}
+
+async function handleDeleteCustomProduct(productId) {
+  const ok = await deleteCustomProduct(productId);
+  if (!ok) return;
+
+  customProducts = customProducts.filter(p => p.id !== productId);
+  showToast('Product deleted');
+  renderCustomProducts();
+}
+
+// ============================================================
 // Toast
 // ============================================================
 
@@ -974,6 +1183,31 @@ function initEvents() {
     switchView('log');
     previewMeal();
   });
+
+  // Custom products: show add form
+  document.getElementById('show-add-product-btn').addEventListener('click', () => {
+    showCustomProductForm(null);
+  });
+
+  // Custom products: cancel form
+  document.getElementById('cp-cancel-btn').addEventListener('click', hideCustomProductForm);
+
+  // Custom products: save
+  document.getElementById('cp-save-btn').addEventListener('click', saveCustomProduct);
+
+  // Custom products: edit and delete (delegated)
+  document.getElementById('custom-products-list').addEventListener('click', e => {
+    const editBtn = e.target.closest('.cp-edit-btn');
+    if (editBtn) {
+      const product = customProducts.find(p => p.id === editBtn.dataset.id);
+      if (product) showCustomProductForm(product);
+      return;
+    }
+    const deleteBtn = e.target.closest('.cp-delete-btn');
+    if (deleteBtn) {
+      handleDeleteCustomProduct(deleteBtn.dataset.id);
+    }
+  });
 }
 
 // ============================================================
@@ -988,7 +1222,7 @@ async function init() {
   const { data: { session } } = await sb.auth.getSession();
 
   if (session) {
-    await loadMeals();
+    await Promise.all([loadMeals(), loadCustomProducts()]);
     showApp();
     renderLogView();
   } else {

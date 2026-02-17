@@ -555,6 +555,7 @@ nav {
 .source-off { background: #dbeafe; color: #1e40af; }
 .source-usda { background: #dcfce7; color: #166534; }
 .source-estimated { background: #f3f4f6; color: #6b7280; }
+.source-custom { background: #f3e8ff; color: #7c3aed; }
 
 .preview-item-macros {
   display: flex;
@@ -973,6 +974,117 @@ nav {
   opacity: 1;
 }
 
+/* === Custom Products === */
+.custom-product-form {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+.custom-product-form.hidden {
+  display: none;
+}
+
+.custom-product-form h3 {
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+
+.cp-field {
+  margin-bottom: 12px;
+}
+
+.cp-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.cp-field input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.cp-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.cp-macro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cp-macro-grid .cp-field {
+  margin-bottom: 0;
+}
+
+.cp-macro-grid input {
+  text-align: right;
+}
+
+.cp-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.custom-products-list {
+  display: grid;
+  gap: 12px;
+}
+
+.cp-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid #7c3aed;
+}
+
+.cp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.cp-card-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.cp-card-serving {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.cp-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cp-card-macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
 /* === Responsive === */
 @media (min-width: 480px) {
   .macro-cards {
@@ -1002,6 +1114,10 @@ nav {
   }
 
   .remaining-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cp-macro-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }

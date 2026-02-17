@@ -792,6 +792,45 @@ async function searchUSDA(query) {
 }
 
 /**
+ * Search user's custom products for a match.
+ * Uses the same fuzzy matching approach as the local DB.
+ * Returns { macros, serving, source } or null.
+ */
+function searchCustomProducts(query, products) {
+  if (!products || products.length === 0) return null;
+  const q = query.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  if (!q) return null;
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const p of products) {
+    const key = p.product_name.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    const score = matchScore(q, key);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = p;
+    }
+  }
+
+  if (bestScore < 0.5 || !bestMatch) return null;
+
+  return {
+    macros: {
+      calories: bestMatch.calories,
+      protein: bestMatch.protein,
+      carbs: bestMatch.carbs,
+      fat: bestMatch.fat,
+      fiber: bestMatch.fiber,
+      sodium: bestMatch.sodium,
+    },
+    serving: bestMatch.serving_size,
+    source: 'Custom',
+    matchedAs: bestMatch.product_name,
+  };
+}
+
+/**
  * Async version of parseItem: tries APIs first, then local DB fallback.
  * Returns the same shape as parseItem but adds a `source` field.
  */
@@ -799,7 +838,20 @@ async function parseItemAsync(raw) {
   const cleaned = raw.trim().toLowerCase();
   const { quantity, remainder } = extractQuantity(cleaned);
 
-  // --- Try local DB first (instant, high confidence for known foods) ---
+  // --- Try custom products FIRST (user overrides) ---
+  const customResult = searchCustomProducts(
+    remainder,
+    typeof customProducts !== 'undefined' ? customProducts : []
+  );
+  if (customResult) {
+    const macros = scaleMacros(customResult.macros, quantity);
+    return {
+      name: raw.trim(), matchedAs: customResult.matchedAs, macros, quantity,
+      serving: customResult.serving, source: 'Custom',
+    };
+  }
+
+  // --- Try local DB (instant, high confidence for known foods) ---
   if (NUTRITION_DB[remainder]) {
     const macros = scaleMacros(NUTRITION_DB[remainder], quantity);
     return {

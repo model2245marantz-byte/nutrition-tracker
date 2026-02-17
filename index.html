@@ -37,6 +37,7 @@
         <button class="nav-btn active" data-view="log">Log Meal</button>
         <button class="nav-btn" data-view="history">History</button>
         <button class="nav-btn" data-view="recommendations">Suggest</button>
+        <button class="nav-btn" data-view="custom">Custom</button>
       </nav>
     </header>
 
@@ -151,6 +152,62 @@
         </div>
         <div id="history-list" class="history-list">
           <p class="empty-state">No meals logged yet.</p>
+        </div>
+      </section>
+
+      <!-- Custom Products View -->
+      <section id="view-custom" class="view">
+        <div class="section-header">
+          <h2>Custom Products</h2>
+          <button id="show-add-product-btn" class="btn btn-primary btn-sm">+ Add Product</button>
+        </div>
+
+        <!-- Add / Edit Form (hidden by default) -->
+        <div id="custom-product-form" class="custom-product-form hidden">
+          <h3 id="custom-form-title">Add Custom Product</h3>
+          <input type="hidden" id="cp-edit-id" value="">
+          <div class="cp-field">
+            <label for="cp-name">Product Name</label>
+            <input type="text" id="cp-name" placeholder="e.g. Kirkland Protein Bar">
+          </div>
+          <div class="cp-field">
+            <label for="cp-serving">Serving Size</label>
+            <input type="text" id="cp-serving" placeholder="e.g. 1 bar, 100g" value="1 serving">
+          </div>
+          <div class="cp-macro-grid">
+            <div class="cp-field">
+              <label for="cp-calories">Calories</label>
+              <input type="number" id="cp-calories" min="0" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-protein">Protein (g)</label>
+              <input type="number" id="cp-protein" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-carbs">Carbs (g)</label>
+              <input type="number" id="cp-carbs" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-fat">Fat (g)</label>
+              <input type="number" id="cp-fat" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-fiber">Fiber (g)</label>
+              <input type="number" id="cp-fiber" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-sodium">Sodium (mg)</label>
+              <input type="number" id="cp-sodium" min="0" value="0">
+            </div>
+          </div>
+          <div class="cp-form-actions">
+            <button id="cp-cancel-btn" class="btn btn-secondary">Cancel</button>
+            <button id="cp-save-btn" class="btn btn-primary">Save Product</button>
+          </div>
+        </div>
+
+        <div id="custom-products-list" class="custom-products-list">
+          <p class="empty-state">No custom products yet. Add your first one!</p>
         </div>
       </section>
 
