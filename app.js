@@ -470,7 +470,7 @@ function renderRecommendations() {
     `;
   }).join('');
 
-  // Score and filter recommendations
+  // Score recommendations
   const scored = scoreRecommendations(remaining, totals);
   const container = document.getElementById('recommendations-list');
 
@@ -479,25 +479,56 @@ function renderRecommendations() {
     return;
   }
 
-  container.innerHTML = scored.map(rec => {
-    const m = rec.macros;
-    return `
-      <div class="recommendation-card">
-        <h4>${escapeHTML(rec.name)}</h4>
-        <p class="rec-description">${escapeHTML(rec.description)}</p>
-        <div class="rec-macros">
-          <span class="macro-tag cal">${m.calories} cal</span>
-          <span class="macro-tag pro">${m.protein}g P</span>
-          <span class="macro-tag carb">${m.carbs}g C</span>
-          <span class="macro-tag fat">${m.fat}g F</span>
-          <span class="macro-tag fib">${m.fiber}g Fib</span>
-          <span class="macro-tag sod">${m.sodium}mg Na</span>
-        </div>
-        <div class="rec-fit">${rec.fitReason}</div>
-        <button class="rec-add-btn" data-items="${escapeAttr(rec.items)}">+ Add to meal log</button>
+  // Get active filter
+  const activeFilter = document.querySelector('.rec-filter-btn.active')?.dataset.filter || 'all';
+
+  // Filter by meal type if not "all"
+  const filtered = activeFilter === 'all'
+    ? scored
+    : scored.filter(rec => rec.mealType === activeFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p class="empty-state">No ${activeFilter} suggestions match your remaining targets.</p>`;
+    return;
+  }
+
+  // Group by meal type
+  const typeOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const groups = {};
+  for (const rec of filtered) {
+    const type = rec.mealType || 'other';
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(rec);
+  }
+
+  const typeLabels = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' };
+
+  container.innerHTML = typeOrder
+    .filter(type => groups[type]?.length > 0)
+    .map(type => `
+      <div class="rec-type-section">
+        <h3 class="rec-type-header">${typeLabels[type]}</h3>
+        ${groups[type].map(rec => {
+          const m = rec.macros;
+          return `
+            <div class="recommendation-card">
+              <h4>${escapeHTML(rec.name)}</h4>
+              <p class="rec-description">${escapeHTML(rec.description)}</p>
+              <div class="rec-macros">
+                <span class="macro-tag cal">${m.calories} cal</span>
+                <span class="macro-tag pro">${m.protein}g P</span>
+                <span class="macro-tag carb">${m.carbs}g C</span>
+                <span class="macro-tag fat">${m.fat}g F</span>
+                <span class="macro-tag fib">${m.fiber}g Fib</span>
+                <span class="macro-tag sod">${m.sodium}mg Na</span>
+              </div>
+              <div class="rec-fit">${rec.fitReason}</div>
+              <button class="rec-add-btn" data-items="${escapeAttr(rec.items)}">+ Add to meal log</button>
+            </div>
+          `;
+        }).join('')}
       </div>
-    `;
-  }).join('');
+    `).join('');
 }
 
 function scoreRecommendations(remaining, todayTotals) {
@@ -577,8 +608,7 @@ function scoreRecommendations(remaining, todayTotals) {
       return { ...rec, score, fitReason };
     })
     .filter(rec => rec.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6);
+    .sort((a, b) => b.score - a.score);
 
   return scored;
 }
@@ -720,6 +750,15 @@ function initEvents() {
   document.querySelector('.modal-overlay').addEventListener('click', closeEditModal);
   document.getElementById('save-edit-btn').addEventListener('click', saveEditedMeal);
   document.getElementById('delete-meal-btn').addEventListener('click', deleteEditingMeal);
+
+  // Recommendation filter buttons
+  document.querySelectorAll('.rec-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.rec-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderRecommendations();
+    });
+  });
 
   // Recommendation add button (delegated)
   document.addEventListener('click', e => {

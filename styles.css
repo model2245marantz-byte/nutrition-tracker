@@ -570,6 +570,54 @@ nav {
 }
 
 /* === Recommendations === */
+.rec-filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+
+.rec-filter-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rec-filter-btn:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.rec-filter-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.rec-type-section {
+  margin-bottom: 8px;
+}
+
+.rec-type-header {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 0 6px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--primary-bg);
+}
+
 .remaining-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

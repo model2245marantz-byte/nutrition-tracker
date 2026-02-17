@@ -334,96 +334,112 @@ const RECOMMENDATION_TEMPLATES = [
     name: "Grilled Chicken & Rice Bowl",
     description: "Lean protein with complex carbs",
     items: "grilled chicken breast, brown rice, broccoli, olive oil",
+    mealType: "lunch",
     macros: { calories: 500, protein: 40, carbs: 56, fat: 18, fiber: 9, sodium: 136 }
   },
   {
     name: "Salmon Power Plate",
     description: "Omega-3 rich with fiber-packed sides",
     items: "salmon, quinoa, asparagus, olive oil",
+    mealType: "dinner",
     macros: { calories: 640, protein: 48, carbs: 44, fat: 33, fiber: 8, sodium: 76 }
   },
   {
     name: "Protein Oatmeal Bowl",
     description: "High-protein breakfast with sustained energy",
     items: "oatmeal, whey protein, banana, peanut butter",
+    mealType: "breakfast",
     macros: { calories: 570, protein: 38, carbs: 64, fat: 20, fiber: 9, sodium: 275 }
   },
   {
     name: "Turkey & Avocado Wrap",
     description: "Balanced lunch with healthy fats",
     items: "turkey breast, avocado, tortilla, lettuce, tomato",
+    mealType: "lunch",
     macros: { calories: 530, protein: 38, carbs: 38, fat: 25, fiber: 14, sodium: 470 }
   },
   {
     name: "Steak & Sweet Potato",
     description: "Classic muscle-building dinner",
     items: "sirloin steak, sweet potato, green beans, butter",
+    mealType: "dinner",
     macros: { calories: 592, protein: 40, carbs: 72, fat: 18, fiber: 12, sodium: 136 }
   },
   {
     name: "Greek Yogurt Parfait",
     description: "High-protein snack with fiber",
     items: "greek yogurt, granola, mixed berries, honey",
+    mealType: "snack",
     macros: { calories: 434, protein: 23, carbs: 63, fat: 13, fiber: 7, sodium: 71 }
   },
   {
     name: "Egg & Toast Breakfast",
     description: "Simple, balanced morning fuel",
     items: "3 eggs, whole wheat bread, avocado",
+    mealType: "breakfast",
     macros: { calories: 536, protein: 25, carbs: 27, fat: 39, fiber: 14, sodium: 424 }
   },
   {
     name: "Chicken Stir-Fry",
     description: "Lean protein with veggies",
     items: "chicken stir fry, brown rice",
+    mealType: "dinner",
     macros: { calories: 595, protein: 35, carbs: 75, fat: 16, fiber: 8, sodium: 860 }
   },
   {
     name: "Lentil Soup & Bread",
     description: "High-fiber plant-based option",
     items: "lentil soup, sourdough bread, olive oil",
+    mealType: "lunch",
     macros: { calories: 409, protein: 19, carbs: 56, fat: 11, fiber: 11, sodium: 780 }
   },
   {
     name: "Tuna & Quinoa Bowl",
     description: "Low-fat, high-protein meal",
     items: "tuna, quinoa, edamame, soy sauce",
+    mealType: "lunch",
     macros: { calories: 570, protein: 54, carbs: 53, fat: 13, fiber: 13, sodium: 960 }
   },
   {
     name: "Cottage Cheese & Fruit",
     description: "Quick high-protein snack",
     items: "cottage cheese, pineapple, chia seeds",
+    mealType: "snack",
     macros: { calories: 402, protein: 30, carbs: 38, fat: 14, fiber: 11, sodium: 710 }
   },
   {
     name: "Peanut Butter Banana Shake",
     description: "Calorie-dense muscle-building shake",
     items: "protein shake, banana, peanut butter, oat milk",
+    mealType: "snack",
     macros: { calories: 555, protein: 40, carbs: 53, fat: 21, fiber: 8, sodium: 490 }
   },
   {
     name: "Chicken & Black Bean Bowl",
     description: "High-fiber, high-protein tex-mex style",
     items: "chicken breast, black beans, rice, salsa, sour cream",
+    mealType: "dinner",
     macros: { calories: 680, protein: 54, carbs: 89, fat: 11, fiber: 16, sodium: 505 }
   },
   {
     name: "Shrimp & Veggie Plate",
     description: "Low-calorie, high-protein dinner",
     items: "shrimp, brown rice, bell pepper, broccoli, soy sauce",
+    mealType: "dinner",
     macros: { calories: 445, protein: 35, carbs: 63, fat: 5, fiber: 11, sodium: 1200 }
   },
   {
     name: "Overnight Oats",
     description: "Prep-ahead fiber-rich breakfast",
     items: "overnight oats, almond butter, blueberries",
+    mealType: "breakfast",
     macros: { calories: 631, protein: 20, carbs: 71, fat: 31, fiber: 14, sodium: 102 }
   },
   {
     name: "Light Garden Salad & Chicken",
     description: "Low-calorie, filling lunch",
     items: "chicken breast, garden salad, balsamic vinaigrette",
+    mealType: "lunch",
     macros: { calories: 325, protein: 34, carbs: 19, fat: 11, fiber: 6, sodium: 389 }
   },
 ];
