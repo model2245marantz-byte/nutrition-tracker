@@ -602,3 +602,272 @@ function sumMacros(macrosList) {
   total.sodium = Math.round(total.sodium);
   return total;
 }
+
+// ============================================================
+// API-backed Nutrition Lookup
+// ============================================================
+
+const USDA_API_KEY = 'DEMO_KEY';
+const _apiCache = new Map();
+
+function _round1(v) {
+  return Math.round(v * 10) / 10;
+}
+
+async function _fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const resp = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    return resp;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
+/**
+ * Check whether a product name is a reasonable match for the query.
+ * Requires at least half of the significant query words to appear in the name.
+ */
+function _isRelevantMatch(query, productName) {
+  if (!productName) return false;
+  const qWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  if (qWords.length === 0) return true;
+  const pName = productName.toLowerCase();
+  const hits = qWords.filter(w => pName.includes(w)).length;
+  return hits >= Math.ceil(qWords.length / 2);
+}
+
+/**
+ * Search Open Food Facts for a food item.
+ * Returns { macros, serving, source } per one serving or null.
+ */
+async function searchOpenFoodFacts(query) {
+  const cacheKey = 'off:' + query.toLowerCase().trim();
+  if (_apiCache.has(cacheKey)) return _apiCache.get(cacheKey);
+
+  try {
+    const url = 'https://world.openfoodfacts.org/cgi/search.pl'
+      + '?search_terms=' + encodeURIComponent(query)
+      + '&search_simple=1&action=process&json=1&page_size=5'
+      + '&fields=product_name,nutriments,serving_size,serving_quantity';
+    const resp = await _fetchWithTimeout(url, 4000);
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    if (!data.products || data.products.length === 0) return null;
+
+    for (const product of data.products) {
+      const n = product.nutriments;
+      if (!n) continue;
+
+      // Must have calories
+      const hasPer100 = n['energy-kcal_100g'] != null && n['energy-kcal_100g'] > 0;
+      const hasPerServing = n['energy-kcal_serving'] != null && n['energy-kcal_serving'] > 0;
+      if (!hasPer100 && !hasPerServing) continue;
+
+      // Must be relevant to query
+      if (!_isRelevantMatch(query, product.product_name)) continue;
+
+      // Determine serving size in grams
+      let servingGrams = 100;
+      if (product.serving_quantity) {
+        servingGrams = parseFloat(product.serving_quantity) || 100;
+      } else if (product.serving_size) {
+        const gMatch = product.serving_size.match(/([\d.]+)\s*g/i);
+        if (gMatch) servingGrams = parseFloat(gMatch[1]) || 100;
+      }
+
+      let macros;
+      if (hasPer100) {
+        // Scale per-100g values to one serving
+        const f = servingGrams / 100;
+        macros = {
+          calories: Math.round((n['energy-kcal_100g'] || 0) * f),
+          protein: _round1((n['proteins_100g'] || 0) * f),
+          carbs:   _round1((n['carbohydrates_100g'] || 0) * f),
+          fat:     _round1((n['fat_100g'] || 0) * f),
+          fiber:   _round1((n['fiber_100g'] || 0) * f),
+          sodium:  Math.round((n['sodium_100g'] || 0) * f * 1000), // g → mg
+        };
+      } else {
+        macros = {
+          calories: Math.round(n['energy-kcal_serving'] || 0),
+          protein: _round1(n['proteins_serving'] || 0),
+          carbs:   _round1(n['carbohydrates_serving'] || 0),
+          fat:     _round1(n['fat_serving'] || 0),
+          fiber:   _round1(n['fiber_serving'] || 0),
+          sodium:  Math.round((n['sodium_serving'] || 0) * 1000),
+        };
+      }
+
+      // Sanity: skip if calories are unreasonably high per serving (>2000)
+      if (macros.calories > 2000) continue;
+
+      const result = {
+        macros,
+        serving: product.serving_size || (servingGrams + 'g'),
+        source: 'Open Food Facts',
+      };
+      _apiCache.set(cacheKey, result);
+      return result;
+    }
+
+    _apiCache.set(cacheKey, null);
+    return null;
+  } catch (e) {
+    console.warn('Open Food Facts lookup failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Search USDA FoodData Central for a food item.
+ * Returns { macros, serving, source } per one serving or null.
+ */
+async function searchUSDA(query) {
+  const cacheKey = 'usda:' + query.toLowerCase().trim();
+  if (_apiCache.has(cacheKey)) return _apiCache.get(cacheKey);
+
+  try {
+    const url = 'https://api.nal.usda.gov/fdc/v1/foods/search'
+      + '?api_key=' + USDA_API_KEY
+      + '&query=' + encodeURIComponent(query)
+      + '&pageSize=3'
+      + '&dataType=Foundation,SR%20Legacy';
+    const resp = await _fetchWithTimeout(url, 4000);
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    if (!data.foods || data.foods.length === 0) return null;
+
+    const food = data.foods[0];
+    const nutrients = food.foodNutrients || [];
+
+    function getNutrient(name) {
+      const n = nutrients.find(item => item.nutrientName === name);
+      return n ? (n.value || 0) : 0;
+    }
+
+    // USDA values are per 100g
+    const per100 = {
+      calories: getNutrient('Energy'),
+      protein:  getNutrient('Protein'),
+      carbs:    getNutrient('Carbohydrate, by difference'),
+      fat:      getNutrient('Total lipid (fat)'),
+      fiber:    getNutrient('Fiber, total dietary'),
+      sodium:   getNutrient('Sodium, Na'), // already mg per 100g
+    };
+
+    // Scale to serving
+    const servingSize = food.servingSize || 100;
+    const f = servingSize / 100;
+
+    const macros = {
+      calories: Math.round(per100.calories * f),
+      protein:  _round1(per100.protein * f),
+      carbs:    _round1(per100.carbs * f),
+      fat:      _round1(per100.fat * f),
+      fiber:    _round1(per100.fiber * f),
+      sodium:   Math.round(per100.sodium * f),
+    };
+
+    const servingLabel = food.servingSizeUnit
+      ? servingSize + food.servingSizeUnit
+      : servingSize + 'g';
+
+    const result = {
+      macros,
+      serving: servingLabel,
+      source: 'USDA',
+    };
+    _apiCache.set(cacheKey, result);
+    return result;
+  } catch (e) {
+    console.warn('USDA lookup failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Async version of parseItem: tries APIs first, then local DB fallback.
+ * Returns the same shape as parseItem but adds a `source` field.
+ */
+async function parseItemAsync(raw) {
+  const cleaned = raw.trim().toLowerCase();
+  const { quantity, remainder } = extractQuantity(cleaned);
+
+  // --- Try local DB first (instant, high confidence for known foods) ---
+  if (NUTRITION_DB[remainder]) {
+    const macros = scaleMacros(NUTRITION_DB[remainder], quantity);
+    return {
+      name: raw.trim(), matchedAs: remainder, macros, quantity,
+      serving: NUTRITION_DB[remainder].serving, source: 'Estimated',
+    };
+  }
+  const localFuzzy = fuzzyMatch(remainder);
+  if (localFuzzy && matchScore(remainder, localFuzzy) >= 0.8) {
+    // High-confidence local match — use it without API call
+    const macros = scaleMacros(NUTRITION_DB[localFuzzy], quantity);
+    return {
+      name: raw.trim(), matchedAs: localFuzzy, macros, quantity,
+      serving: NUTRITION_DB[localFuzzy].serving, source: 'Estimated',
+    };
+  }
+
+  // --- Try Open Food Facts ---
+  const offResult = await searchOpenFoodFacts(remainder);
+  if (offResult) {
+    const macros = scaleMacros(offResult.macros, quantity);
+    return {
+      name: raw.trim(), matchedAs: remainder, macros, quantity,
+      serving: offResult.serving, source: offResult.source,
+    };
+  }
+
+  // --- Try USDA ---
+  const usdaResult = await searchUSDA(remainder);
+  if (usdaResult) {
+    const macros = scaleMacros(usdaResult.macros, quantity);
+    return {
+      name: raw.trim(), matchedAs: remainder, macros, quantity,
+      serving: usdaResult.serving, source: usdaResult.source,
+    };
+  }
+
+  // --- Low-confidence local fuzzy match ---
+  if (localFuzzy) {
+    const macros = scaleMacros(NUTRITION_DB[localFuzzy], quantity);
+    return {
+      name: raw.trim(), matchedAs: localFuzzy, macros, quantity,
+      serving: NUTRITION_DB[localFuzzy].serving, source: 'Estimated',
+    };
+  }
+
+  // --- Completely unknown ---
+  return {
+    name: raw.trim(), matchedAs: null, macros: zeroMacros(), quantity,
+    unknown: true, source: 'Unknown',
+  };
+}
+
+/**
+ * Async version of parseMealInput: resolves all items via API + fallback.
+ * Returns { items, totals } — same shape as the sync version.
+ */
+async function parseMealInputAsync(input) {
+  const raw = input.trim();
+  if (!raw) return { items: [], totals: zeroMacros() };
+
+  const parts = raw
+    .split(/,|\n|(?:\band\b)/gi)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  const items = await Promise.all(parts.map(part => parseItemAsync(part)));
+  const totals = sumMacros(items.map(i => i.macros));
+
+  return { items, totals };
+}

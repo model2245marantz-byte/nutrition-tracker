@@ -27,6 +27,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let meals = [];          // All meals, persisted
 let currentPreview = null; // Preview of meal being entered
 let editingMealId = null;  // ID of meal being edited
+let previewGeneration = 0; // Cancellation counter for async preview
 
 // ============================================================
 // Auth
@@ -384,13 +385,37 @@ function renderQuickAddChips() {
   ).join('');
 }
 
-function previewMeal() {
+async function previewMeal() {
   const input = document.getElementById('meal-input').value;
   if (!input.trim()) return;
 
-  currentPreview = parseMealInput(input);
-  renderPreview(currentPreview);
+  const gen = ++previewGeneration;
+
+  // Show loading state immediately
+  const container = document.getElementById('parsed-preview');
+  const itemsEl = document.getElementById('preview-items');
+  container.classList.remove('hidden');
+  itemsEl.innerHTML = '<div class="preview-loading">Looking up nutrition data...</div>';
+  document.getElementById('preview-totals').innerHTML = '';
+  document.getElementById('log-btn').disabled = true;
+
+  // Run async lookup (APIs + local fallback)
+  const parsed = await parseMealInputAsync(input);
+
+  // If the user typed again while we were fetching, discard this result
+  if (gen !== previewGeneration) return;
+
+  currentPreview = parsed;
+  renderPreview(parsed);
   document.getElementById('log-btn').disabled = false;
+}
+
+function sourceClass(source) {
+  if (!source) return 'source-estimated';
+  const s = source.toLowerCase();
+  if (s.includes('open food')) return 'source-off';
+  if (s.includes('usda')) return 'source-usda';
+  return 'source-estimated';
 }
 
 function renderPreview(parsed) {
@@ -404,14 +429,20 @@ function renderPreview(parsed) {
     if (item.unknown) {
       return `
         <div class="preview-item">
-          <span class="preview-item-name">${escapeHTML(item.name)}</span>
+          <div class="preview-item-header">
+            <span class="preview-item-name">${escapeHTML(item.name)}</span>
+          </div>
           <span class="preview-item-unknown">Not recognized - will be logged with 0 macros</span>
         </div>
       `;
     }
+    const src = item.source || 'Estimated';
     return `
       <div class="preview-item">
-        <span class="preview-item-name">${escapeHTML(item.name)}${item.quantity !== 1 ? ' (x' + item.quantity + ')' : ''}</span>
+        <div class="preview-item-header">
+          <span class="preview-item-name">${escapeHTML(item.name)}${item.quantity !== 1 ? ' (x' + item.quantity + ')' : ''}</span>
+          <span class="preview-source ${sourceClass(src)}">${escapeHTML(src)}</span>
+        </div>
         <span class="preview-item-macros">
           <span>${item.macros.calories} cal</span>
           <span>${item.macros.protein}g P</span>
@@ -438,9 +469,9 @@ async function logMeal() {
   const description = input.value.trim();
   if (!description) return;
 
-  // If no preview, parse now
+  // If no preview, parse now (async with API lookup)
   if (!currentPreview) {
-    currentPreview = parseMealInput(description);
+    currentPreview = await parseMealInputAsync(description);
   }
 
   const mealType = document.querySelector('.meal-type-btn.active').dataset.type;
@@ -879,7 +910,7 @@ function initEvents() {
         document.getElementById('log-btn').disabled = true;
         currentPreview = null;
       }
-    }, 400);
+    }, 600);
   });
 
   // Keyboard shortcut: Enter to log (when Shift not pressed for newlines)

@@ -509,19 +509,52 @@ nav {
   margin-bottom: 12px;
 }
 
+.preview-loading {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
 .preview-item {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
   background: var(--surface);
   border-radius: 6px;
   font-size: 0.85rem;
+  gap: 4px;
+}
+
+.preview-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .preview-item-name {
   font-weight: 500;
 }
+
+.preview-source {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.source-off { background: #dbeafe; color: #1e40af; }
+.source-usda { background: #dcfce7; color: #166534; }
+.source-estimated { background: #f3f4f6; color: #6b7280; }
 
 .preview-item-macros {
   display: flex;
