@@ -1,0 +1,822 @@
+/* === Reset & Base === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --primary: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-bg: #eef2ff;
+  --calories-color: #f59e0b;
+  --protein-color: #3b82f6;
+  --carbs-color: #8b5cf6;
+  --fat-color: #f97316;
+  --fiber-color: #10b981;
+  --sodium-green: #10b981;
+  --sodium-yellow: #f59e0b;
+  --sodium-red: #ef4444;
+  --danger: #ef4444;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* === Layout === */
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+  padding: 16px 0 0;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 4px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.nav-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* === Views === */
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.section-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-top: 2px;
+}
+
+.date-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* === Macro Cards === */
+.macro-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.macro-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.macro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.macro-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.macro-values {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.macro-values .current {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.progress-bar {
+  height: 10px;
+  background: var(--bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.4s ease, background-color 0.3s;
+  width: 0%;
+}
+
+#card-calories .progress-fill { background: var(--calories-color); }
+#card-protein .progress-fill { background: var(--protein-color); }
+#card-carbs .progress-fill { background: var(--carbs-color); }
+#card-fat .progress-fill { background: var(--fat-color); }
+#card-fiber .progress-fill { background: var(--fiber-color); }
+
+/* Sodium special styling */
+.sodium-card {
+  border: 2px solid var(--sodium-green);
+  position: relative;
+}
+
+.sodium-card.warning {
+  border-color: var(--sodium-yellow);
+}
+
+.sodium-card.danger {
+  border-color: var(--sodium-red);
+}
+
+.sodium-card .progress-fill {
+  background: var(--sodium-green);
+}
+
+.sodium-card.warning .progress-fill {
+  background: var(--sodium-yellow);
+}
+
+.sodium-card.danger .progress-fill {
+  background: var(--sodium-red);
+}
+
+.sodium-status {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.sodium-card .sodium-status {
+  color: var(--sodium-green);
+}
+
+.sodium-card.warning .sodium-status {
+  color: var(--sodium-yellow);
+}
+
+.sodium-card.danger .sodium-status {
+  color: var(--sodium-red);
+}
+
+/* === Today's Meals === */
+.today-meals {
+  margin-top: 24px;
+}
+
+.today-meals h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.meal-list {
+  display: grid;
+  gap: 8px;
+}
+
+.meal-entry {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.meal-entry:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.meal-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.meal-entry-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+}
+
+.meal-entry-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.meal-entry-description {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.meal-entry-macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+
+.macro-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.macro-tag.cal { background: #fef3c7; color: #92400e; }
+.macro-tag.pro { background: #dbeafe; color: #1e40af; }
+.macro-tag.carb { background: #ede9fe; color: #5b21b6; }
+.macro-tag.fat { background: #ffedd5; color: #9a3412; }
+.macro-tag.fib { background: #d1fae5; color: #065f46; }
+.macro-tag.sod { background: #fee2e2; color: #991b1b; }
+
+.empty-state {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 32px 16px;
+  font-size: 0.9rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+/* === Log Form === */
+.log-form-container {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.meal-type-selector {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.meal-type-btn {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.meal-type-btn:hover {
+  border-color: var(--primary-light);
+  color: var(--text);
+}
+
+.meal-type-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+#meal-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+  min-height: 80px;
+}
+
+#meal-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.input-hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* Parsed Preview */
+.parsed-preview {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+
+.parsed-preview.hidden {
+  display: none;
+}
+
+.parsed-preview h3 {
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.preview-items {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.preview-item-name {
+  font-weight: 500;
+}
+
+.preview-item-macros {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.preview-item-unknown {
+  color: var(--sodium-yellow);
+  font-style: italic;
+}
+
+.preview-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.preview-total {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  flex: 1;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* === Quick Add === */
+.quick-add {
+  margin-top: 24px;
+}
+
+.quick-add h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.quick-add-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-chip {
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-chip:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary-light);
+  color: var(--primary);
+}
+
+/* === History === */
+.history-list {
+  display: grid;
+  gap: 24px;
+}
+
+.history-date-group {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.history-date-header {
+  padding: 12px 16px;
+  background: var(--primary-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-date-totals {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.history-meal-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.history-meal-item:last-child {
+  border-bottom: none;
+}
+
+.history-meal-item:hover {
+  background: var(--bg);
+}
+
+/* === Recommendations === */
+.remaining-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.remaining-item {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.remaining-item .remaining-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.remaining-item .remaining-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.remaining-item.negative .remaining-value {
+  color: var(--danger);
+}
+
+.recommendations-list {
+  display: grid;
+  gap: 12px;
+}
+
+.recommendation-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--primary);
+}
+
+.recommendation-card h4 {
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.recommendation-card .rec-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.recommendation-card .rec-macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.recommendation-card .rec-fit {
+  font-size: 0.8rem;
+  color: var(--fiber-color);
+  font-weight: 500;
+}
+
+.rec-add-btn {
+  padding: 6px 14px;
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-light);
+  border-radius: 6px;
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rec-add-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* === Modal === */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  gap: 8px;
+}
+
+.edit-item {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.edit-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.edit-item-name {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.edit-macro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.edit-macro-field label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.edit-macro-field input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.edit-macro-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* === Toast === */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  z-index: 300;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+/* === Responsive === */
+@media (min-width: 480px) {
+  .macro-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sodium-card {
+    grid-column: 1 / -1;
+  }
+
+  .remaining-summary {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .edit-macro-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .meal-type-selector {
+    flex-wrap: wrap;
+  }
+
+  .meal-type-btn {
+    flex: 0 0 calc(50% - 3px);
+  }
+
+  .remaining-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
