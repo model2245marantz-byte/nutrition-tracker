@@ -740,7 +740,6 @@ function initEvents() {
 function init() {
   loadMeals();
   initEvents();
-  renderDashboard();
   renderLogView();
 }
 
