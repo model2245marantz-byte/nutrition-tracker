@@ -11,7 +11,14 @@ const DAILY_TARGETS = {
   sodium: 1500,
 };
 
-const STORAGE_KEY = 'nutritrack_meals';
+// ============================================================
+// Supabase Client
+// ============================================================
+
+const SUPABASE_URL = 'https://vitsincshpzqbdnkzxsz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_EMRGr-0ADLo_LfmbIDdMLw_Axt8Cc_T';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
 // State
@@ -22,20 +29,177 @@ let currentPreview = null; // Preview of meal being entered
 let editingMealId = null;  // ID of meal being edited
 
 // ============================================================
-// Persistence
+// Auth
 // ============================================================
 
-function loadMeals() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    meals = data ? JSON.parse(data) : [];
-  } catch {
-    meals = [];
-  }
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
 }
 
-function saveMeals() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
+function showApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function hideAuthError() {
+  document.getElementById('auth-error').classList.add('hidden');
+}
+
+let isSignUpMode = false;
+
+function initAuthEvents() {
+  const form = document.getElementById('auth-form');
+  const toggleBtn = document.getElementById('auth-toggle-btn');
+  const toggleText = document.getElementById('auth-toggle-text');
+  const submitBtn = document.getElementById('auth-submit-btn');
+
+  toggleBtn.addEventListener('click', () => {
+    isSignUpMode = !isSignUpMode;
+    hideAuthError();
+    if (isSignUpMode) {
+      submitBtn.textContent = 'Sign Up';
+      toggleText.textContent = 'Already have an account?';
+      toggleBtn.textContent = 'Sign In';
+    } else {
+      submitBtn.textContent = 'Sign In';
+      toggleText.textContent = "Don't have an account?";
+      toggleBtn.textContent = 'Sign Up';
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAuthError();
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const submitBtn = document.getElementById('auth-submit-btn');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = isSignUpMode ? 'Signing up...' : 'Signing in...';
+
+    try {
+      let result;
+      if (isSignUpMode) {
+        result = await sb.auth.signUp({ email, password });
+      } else {
+        result = await sb.auth.signInWithPassword({ email, password });
+      }
+
+      if (result.error) {
+        showAuthError(result.error.message);
+        return;
+      }
+
+      if (isSignUpMode && !result.data.session) {
+        // Email confirmation required
+        showAuthError('Check your email to confirm your account, then sign in.');
+        isSignUpMode = false;
+        submitBtn.textContent = 'Sign In';
+        document.getElementById('auth-toggle-text').textContent = "Don't have an account?";
+        document.getElementById('auth-toggle-btn').textContent = 'Sign Up';
+        return;
+      }
+
+      // Authenticated
+      await loadMeals();
+      showApp();
+      renderLogView();
+    } finally {
+      submitBtn.disabled = false;
+      if (isSignUpMode) {
+        submitBtn.textContent = 'Sign Up';
+      } else {
+        submitBtn.textContent = 'Sign In';
+      }
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    meals = [];
+    currentPreview = null;
+    editingMealId = null;
+    showAuthScreen();
+  });
+}
+
+// ============================================================
+// Persistence (Supabase)
+// ============================================================
+
+async function loadMeals() {
+  const { data, error } = await sb
+    .from('meals')
+    .select('*')
+    .order('timestamp', { ascending: false });
+
+  if (error) {
+    console.error('Failed to load meals:', error.message);
+    showToast('Failed to load meals');
+    meals = [];
+    return;
+  }
+
+  meals = data.map(row => ({
+    id: row.id,
+    type: row.type,
+    description: row.description,
+    items: row.items,
+    totals: row.totals,
+    date: row.date,
+    timestamp: row.timestamp,
+  }));
+}
+
+async function insertMeal(meal) {
+  const { error } = await sb.from('meals').insert({
+    id: meal.id,
+    type: meal.type,
+    description: meal.description,
+    items: meal.items,
+    totals: meal.totals,
+    date: meal.date,
+    timestamp: meal.timestamp,
+  });
+
+  if (error) {
+    console.error('Failed to save meal:', error.message);
+    showToast('Failed to save meal');
+    return false;
+  }
+  return true;
+}
+
+async function updateMeal(meal) {
+  const { error } = await sb.from('meals').update({
+    items: meal.items,
+    totals: meal.totals,
+  }).eq('id', meal.id);
+
+  if (error) {
+    console.error('Failed to update meal:', error.message);
+    showToast('Failed to update meal');
+    return false;
+  }
+  return true;
+}
+
+async function deleteMeal(mealId) {
+  const { error } = await sb.from('meals').delete().eq('id', mealId);
+
+  if (error) {
+    console.error('Failed to delete meal:', error.message);
+    showToast('Failed to delete meal');
+    return false;
+  }
+  return true;
 }
 
 // ============================================================
@@ -269,7 +433,7 @@ function renderPreview(parsed) {
   `;
 }
 
-function logMeal() {
+async function logMeal() {
   const input = document.getElementById('meal-input');
   const description = input.value.trim();
   if (!description) return;
@@ -291,8 +455,11 @@ function logMeal() {
     timestamp: new Date().toISOString(),
   };
 
+  // Save to Supabase
+  const ok = await insertMeal(meal);
+  if (!ok) return;
+
   meals.push(meal);
-  saveMeals();
 
   // Reset form
   input.value = '';
@@ -403,7 +570,7 @@ function closeEditModal() {
   editingMealId = null;
 }
 
-function saveEditedMeal() {
+async function saveEditedMeal() {
   const meal = meals.find(m => m.id === editingMealId);
   if (!meal) return;
 
@@ -422,7 +589,10 @@ function saveEditedMeal() {
   });
 
   meal.totals = sumMacros(meal.items.map(i => i.macros));
-  saveMeals();
+
+  const ok = await updateMeal(meal);
+  if (!ok) return;
+
   closeEditModal();
   showToast('Meal updated!');
 
@@ -431,10 +601,13 @@ function saveEditedMeal() {
   switchView(activeView);
 }
 
-function deleteEditingMeal() {
+async function deleteEditingMeal() {
   if (!editingMealId) return;
+
+  const ok = await deleteMeal(editingMealId);
+  if (!ok) return;
+
   meals = meals.filter(m => m.id !== editingMealId);
-  saveMeals();
   closeEditModal();
   showToast('Meal deleted');
 
@@ -776,10 +949,20 @@ function initEvents() {
 // Init
 // ============================================================
 
-function init() {
-  loadMeals();
+async function init() {
+  initAuthEvents();
   initEvents();
-  renderLogView();
+
+  // Check for existing session
+  const { data: { session } } = await sb.auth.getSession();
+
+  if (session) {
+    await loadMeals();
+    showApp();
+    renderLogView();
+  } else {
+    showAuthScreen();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -5,11 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NutriTrack - Personal Nutrition Tracker</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div id="app">
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-container">
+      <h1 class="auth-title">NutriTrack</h1>
+      <p class="auth-subtitle">Sign in to track your nutrition</p>
+      <div id="auth-error" class="auth-error hidden"></div>
+      <form id="auth-form" class="auth-form">
+        <input type="email" id="auth-email" placeholder="Email" required autocomplete="email">
+        <input type="password" id="auth-password" placeholder="Password" required autocomplete="current-password" minlength="6">
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary auth-btn">Sign In</button>
+      </form>
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <button id="auth-toggle-btn" class="link-btn">Sign Up</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
     <header>
-      <h1>NutriTrack</h1>
+      <div class="header-row">
+        <h1>NutriTrack</h1>
+        <button id="logout-btn" class="btn btn-secondary btn-sm">Sign Out</button>
+      </div>
       <nav>
         <button class="nav-btn" data-view="dashboard">Dashboard</button>
         <button class="nav-btn active" data-view="log">Log Meal</button>
