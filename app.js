@@ -29,6 +29,7 @@ let customProducts = []; // User's custom products
 let currentPreview = null; // Preview of meal being entered
 let editingMealId = null;  // ID of meal being edited
 let previewGeneration = 0; // Cancellation counter for async preview
+let dashboardDate = null;  // Currently viewed date on dashboard (null = today)
 
 // ============================================================
 // Auth
@@ -327,6 +328,34 @@ function getTodayTotals() {
   return sumMacros(allMacros);
 }
 
+function getDashboardDate() {
+  return dashboardDate || todayStr();
+}
+
+function getMealsForDate(dateStr) {
+  return meals.filter(m => m.date === dateStr);
+}
+
+function getTotalsForDate(dateStr) {
+  return sumMacros(getMealsForDate(dateStr).map(m => m.totals));
+}
+
+function shiftDate(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function hasDataForDate(dateStr) {
+  return meals.some(m => m.date === dateStr);
+}
+
+function getAvailableDates() {
+  const dates = new Set(meals.map(m => m.date));
+  dates.add(todayStr());
+  return dates;
+}
+
 function getMealsByDate() {
   const groups = {};
   for (const m of meals) {
@@ -362,10 +391,29 @@ function switchView(viewName) {
 // ============================================================
 
 function renderDashboard() {
-  const totals = getTodayTotals();
-  const today = new Date();
-  document.getElementById('dashboard-date').textContent =
-    today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const selectedDate = getDashboardDate();
+  const isToday = selectedDate === todayStr();
+  const totals = getTotalsForDate(selectedDate);
+
+  // Update title
+  document.getElementById('dashboard-title').textContent =
+    isToday ? "Today's Nutrition" : 'Nutrition';
+
+  // Update date display
+  const d = new Date(selectedDate + 'T12:00:00');
+  const dateLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('dashboard-date').textContent = isToday ? 'Today, ' + dateLabel : dateLabel;
+
+  // Show/hide Today button and disable Next when on today
+  const todayBtn = document.getElementById('date-today-btn');
+  const nextBtn = document.getElementById('date-next');
+  if (isToday) {
+    todayBtn.classList.add('hidden');
+    nextBtn.disabled = true;
+  } else {
+    todayBtn.classList.remove('hidden');
+    nextBtn.disabled = false;
+  }
 
   // Update each macro card
   updateMacroCard('calories', totals.calories, DAILY_TARGETS.calories);
@@ -375,8 +423,8 @@ function renderDashboard() {
   updateMacroCard('fiber', totals.fiber, DAILY_TARGETS.fiber);
   updateSodiumCard(totals.sodium, DAILY_TARGETS.sodium);
 
-  // Render today's meals
-  renderTodayMeals();
+  // Render meals for selected date
+  renderDashboardMeals(selectedDate);
 }
 
 function updateMacroCard(name, current, target) {
@@ -423,16 +471,23 @@ function updateSodiumCard(current, target) {
   }
 }
 
-function renderTodayMeals() {
+function renderDashboardMeals(dateStr) {
   const container = document.getElementById('today-meal-list');
-  const todayMeals = getTodayMeals();
+  const isToday = dateStr === todayStr();
+  const dateMeals = getMealsForDate(dateStr);
 
-  if (todayMeals.length === 0) {
-    container.innerHTML = '<p class="empty-state">No meals logged today. <button class="link-btn" data-view="log">Log your first meal</button></p>';
+  document.getElementById('dashboard-meals-title').textContent =
+    isToday ? "Today's Meals" : formatDate(dateStr) + "'s Meals";
+
+  if (dateMeals.length === 0) {
+    const msg = isToday
+      ? 'No meals logged today. <button class="link-btn" data-view="log">Log your first meal</button>'
+      : 'No meals logged on this day.';
+    container.innerHTML = `<p class="empty-state">${msg}</p>`;
     return;
   }
 
-  container.innerHTML = todayMeals.map(meal => mealEntryHTML(meal)).join('');
+  container.innerHTML = dateMeals.map(meal => mealEntryHTML(meal)).join('');
 }
 
 function mealEntryHTML(meal) {
@@ -1096,6 +1151,27 @@ function initEvents() {
     if (e.target.classList.contains('link-btn') && e.target.dataset.view) {
       switchView(e.target.dataset.view);
     }
+  });
+
+  // Dashboard date navigation
+  document.getElementById('date-prev').addEventListener('click', () => {
+    const current = getDashboardDate();
+    dashboardDate = shiftDate(current, -1);
+    renderDashboard();
+  });
+
+  document.getElementById('date-next').addEventListener('click', () => {
+    const current = getDashboardDate();
+    const next = shiftDate(current, 1);
+    if (next <= todayStr()) {
+      dashboardDate = next === todayStr() ? null : next;
+      renderDashboard();
+    }
+  });
+
+  document.getElementById('date-today-btn').addEventListener('click', () => {
+    dashboardDate = null;
+    renderDashboard();
   });
 
   // Meal type selector

@@ -45,8 +45,13 @@
       <!-- Dashboard View -->
       <section id="view-dashboard" class="view">
         <div class="section-header">
-          <h2>Today's Nutrition</h2>
-          <span id="dashboard-date" class="date-label"></span>
+          <h2 id="dashboard-title">Today's Nutrition</h2>
+        </div>
+        <div class="date-nav">
+          <button id="date-prev" class="date-nav-btn" aria-label="Previous day">&larr;</button>
+          <span id="dashboard-date" class="date-nav-label"></span>
+          <button id="date-next" class="date-nav-btn" aria-label="Next day">&rarr;</button>
+          <button id="date-today-btn" class="btn btn-secondary btn-sm date-today-btn hidden">Today</button>
         </div>
 
         <div class="macro-cards">
@@ -101,7 +106,7 @@
         </div>
 
         <div class="today-meals">
-          <h3>Today's Meals</h3>
+          <h3 id="dashboard-meals-title">Today's Meals</h3>
           <div id="today-meal-list" class="meal-list">
             <p class="empty-state">No meals logged today. <button class="link-btn" data-view="log">Log your first meal</button></p>
           </div>
