@@ -515,6 +515,11 @@ function mealEntryHTML(meal) {
 // ============================================================
 
 function renderLogView() {
+  const dateInput = document.getElementById('meal-date');
+  if (!dateInput.value) {
+    dateInput.value = todayStr();
+  }
+  dateInput.max = todayStr();
   renderQuickAddChips();
 }
 
@@ -616,6 +621,13 @@ async function logMeal() {
   }
 
   const mealType = document.querySelector('.meal-type-btn.active').dataset.type;
+  const selectedDate = document.getElementById('meal-date').value || todayStr();
+  const isToday = selectedDate === todayStr();
+
+  // For past dates, create a timestamp at noon on that day
+  const timestamp = isToday
+    ? new Date().toISOString()
+    : new Date(selectedDate + 'T12:00:00').toISOString();
 
   const meal = {
     id: generateId(),
@@ -623,8 +635,8 @@ async function logMeal() {
     description: description,
     items: currentPreview.items,
     totals: currentPreview.totals,
-    date: todayStr(),
-    timestamp: new Date().toISOString(),
+    date: selectedDate,
+    timestamp: timestamp,
   };
 
   // Save to Supabase
@@ -638,10 +650,13 @@ async function logMeal() {
   currentPreview = null;
   document.getElementById('parsed-preview').classList.add('hidden');
   document.getElementById('log-btn').disabled = true;
+  document.getElementById('meal-date').value = todayStr();
 
-  showToast('Meal logged!');
+  const toastMsg = isToday ? 'Meal logged!' : `Meal logged for ${formatDate(selectedDate)}!`;
+  showToast(toastMsg);
 
-  // Switch to dashboard
+  // Switch to dashboard showing the logged date
+  dashboardDate = isToday ? null : selectedDate;
   switchView('dashboard');
 }
 

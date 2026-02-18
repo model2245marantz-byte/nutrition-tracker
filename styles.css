@@ -483,6 +483,34 @@ nav {
   box-shadow: var(--shadow);
 }
 
+.log-date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.log-date-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.log-date-input {
+  padding: 6px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+
+.log-date-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
 .meal-type-selector {
   display: flex;
   gap: 6px;
