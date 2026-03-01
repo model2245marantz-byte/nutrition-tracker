@@ -1,0 +1,27 @@
+.dashboard-view {
+  padding-bottom: 32px;
+}
+
+.macro-grid {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 28px;
+  margin-top: 16px;
+}
+
+@media (min-width: 480px) {
+  .macro-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dashboard-meals-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.meal-list {
+  display: grid;
+  gap: 10px;
+}

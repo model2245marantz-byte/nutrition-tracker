@@ -1,0 +1,81 @@
+.meal-preview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.preview-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.preview-items {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.preview-item {
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+
+.preview-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.preview-item-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.preview-item-qty {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.preview-item-macros {
+  display: flex;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.preview-totals {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.preview-totals-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.preview-totals-macros {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.total-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.total-pill.cal { background: #fef3c7; color: #92400e; }
+.total-pill.pro { background: #dbeafe; color: #1e40af; }
+.total-pill.carb { background: #ede9fe; color: #5b21b6; }
+.total-pill.fat { background: #ffedd5; color: #9a3412; }
+.total-pill.fiber { background: #d1fae5; color: #065f46; }
+.total-pill.sodium { background: #fee2e2; color: #991b1b; }

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriTrack - Personal Nutrition Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-container">
+      <h1 class="auth-title">NutriTrack</h1>
+      <p class="auth-subtitle">Sign in to track your nutrition</p>
+      <div id="auth-error" class="auth-error hidden"></div>
+      <form id="auth-form" class="auth-form">
+        <input type="email" id="auth-email" placeholder="Email" required autocomplete="email">
+        <input type="password" id="auth-password" placeholder="Password" required autocomplete="current-password" minlength="6">
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary auth-btn">Sign In</button>
+      </form>
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <button id="auth-toggle-btn" class="link-btn">Sign Up</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+    <header>
+      <div class="header-row">
+        <h1>NutriTrack</h1>
+        <button id="logout-btn" class="btn btn-secondary btn-sm">Sign Out</button>
+      </div>
+      <nav>
+        <button class="nav-btn" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn active" data-view="log">Log Meal</button>
+        <button class="nav-btn" data-view="history">History</button>
+        <button class="nav-btn" data-view="recommendations">Suggest</button>
+        <button class="nav-btn" data-view="custom">Custom</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Dashboard View -->
+      <section id="view-dashboard" class="view">
+        <div class="section-header">
+          <h2 id="dashboard-title">Today's Nutrition</h2>
+        </div>
+        <div class="date-nav">
+          <button id="date-prev" class="date-nav-btn" aria-label="Previous day">&larr;</button>
+          <span id="dashboard-date" class="date-nav-label"></span>
+          <button id="date-next" class="date-nav-btn" aria-label="Next day">&rarr;</button>
+          <button id="date-today-btn" class="btn btn-secondary btn-sm date-today-btn hidden">Today</button>
+        </div>
+
+        <div class="macro-cards">
+          <div class="macro-card" id="card-calories">
+            <div class="macro-header">
+              <span class="macro-name">Calories</span>
+              <span class="macro-values"><span class="current">0</span> / <span class="target">2,950</span> kcal</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+
+          <div class="macro-card" id="card-protein">
+            <div class="macro-header">
+              <span class="macro-name">Protein</span>
+              <span class="macro-values"><span class="current">0</span> / <span class="target">183</span>g</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+
+          <div class="macro-card" id="card-carbs">
+            <div class="macro-header">
+              <span class="macro-name">Carbohydrates</span>
+              <span class="macro-values"><span class="current">0</span> / <span class="target">350</span>g</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+
+          <div class="macro-card" id="card-fat">
+            <div class="macro-header">
+              <span class="macro-name">Fat</span>
+              <span class="macro-values"><span class="current">0</span> / <span class="target">90</span>g</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+
+          <div class="macro-card" id="card-fiber">
+            <div class="macro-header">
+              <span class="macro-name">Fiber</span>
+              <span class="macro-values"><span class="current">0</span> / <span class="target">38</span>g</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+
+          <div class="macro-card sodium-card" id="card-sodium">
+            <div class="macro-header">
+              <span class="macro-name">Sodium</span>
+              <span class="macro-values"><span class="current">0</span> / <span class="target">1,500</span>mg</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <div class="sodium-status" id="sodium-status">On track</div>
+          </div>
+        </div>
+
+        <div class="today-meals">
+          <h3 id="dashboard-meals-title">Today's Meals</h3>
+          <div id="today-meal-list" class="meal-list">
+            <p class="empty-state">No meals logged today. <button class="link-btn" data-view="log">Log your first meal</button></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Log Meal View -->
+      <section id="view-log" class="view active">
+        <div class="section-header">
+          <h2>Log a Meal</h2>
+        </div>
+
+        <div class="log-form-container">
+          <div class="log-date-row">
+            <label for="meal-date" class="log-date-label">Date</label>
+            <input type="date" id="meal-date" class="log-date-input">
+          </div>
+
+          <div class="meal-type-selector">
+            <button class="meal-type-btn active" data-type="breakfast">Breakfast</button>
+            <button class="meal-type-btn" data-type="lunch">Lunch</button>
+            <button class="meal-type-btn" data-type="dinner">Dinner</button>
+            <button class="meal-type-btn" data-type="snack">Snack</button>
+          </div>
+
+          <div class="input-group">
+            <textarea id="meal-input" placeholder="Type your meal... e.g. &quot;grilled chicken breast, brown rice, olive oil&quot; or &quot;Chipotle burrito bowl&quot;" rows="3"></textarea>
+            <div class="input-hint">Separate items with commas. Include quantities like "2 eggs" or "large banana".</div>
+          </div>
+
+          <div id="parsed-preview" class="parsed-preview hidden">
+            <h3>Estimated Nutrition</h3>
+            <div id="preview-items" class="preview-items"></div>
+            <div id="preview-totals" class="preview-totals"></div>
+          </div>
+
+          <div class="form-actions">
+            <button id="preview-btn" class="btn btn-secondary">Preview</button>
+            <button id="log-btn" class="btn btn-primary" disabled>Log Meal</button>
+          </div>
+        </div>
+
+        <div class="quick-add">
+          <h3>Quick Add</h3>
+          <div class="quick-add-chips" id="quick-add-chips"></div>
+        </div>
+      </section>
+
+      <!-- History View -->
+      <section id="view-history" class="view">
+        <div class="section-header">
+          <h2>Meal History</h2>
+        </div>
+        <div id="history-list" class="history-list">
+          <p class="empty-state">No meals logged yet.</p>
+        </div>
+      </section>
+
+      <!-- Custom Products View -->
+      <section id="view-custom" class="view">
+        <div class="section-header">
+          <h2>Custom Products</h2>
+          <button id="show-add-product-btn" class="btn btn-primary btn-sm">+ Add Product</button>
+        </div>
+
+        <!-- Add / Edit Form (hidden by default) -->
+        <div id="custom-product-form" class="custom-product-form hidden">
+          <h3 id="custom-form-title">Add Custom Product</h3>
+          <input type="hidden" id="cp-edit-id" value="">
+          <div class="cp-field">
+            <label for="cp-name">Product Name</label>
+            <input type="text" id="cp-name" placeholder="e.g. Kirkland Protein Bar">
+          </div>
+          <div class="cp-field">
+            <label for="cp-serving">Serving Size</label>
+            <input type="text" id="cp-serving" placeholder="e.g. 1 bar, 100g" value="1 serving">
+          </div>
+          <div class="cp-macro-grid">
+            <div class="cp-field">
+              <label for="cp-calories">Calories</label>
+              <input type="number" id="cp-calories" min="0" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-protein">Protein (g)</label>
+              <input type="number" id="cp-protein" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-carbs">Carbs (g)</label>
+              <input type="number" id="cp-carbs" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-fat">Fat (g)</label>
+              <input type="number" id="cp-fat" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-fiber">Fiber (g)</label>
+              <input type="number" id="cp-fiber" min="0" step="0.1" value="0">
+            </div>
+            <div class="cp-field">
+              <label for="cp-sodium">Sodium (mg)</label>
+              <input type="number" id="cp-sodium" min="0" value="0">
+            </div>
+          </div>
+          <div class="cp-form-actions">
+            <button id="cp-cancel-btn" class="btn btn-secondary">Cancel</button>
+            <button id="cp-save-btn" class="btn btn-primary">Save Product</button>
+          </div>
+        </div>
+
+        <div id="custom-products-list" class="custom-products-list">
+          <p class="empty-state">No custom products yet. Add your first one!</p>
+        </div>
+      </section>
+
+      <!-- Recommendations View -->
+      <section id="view-recommendations" class="view">
+        <div class="section-header">
+          <h2>Meal Suggestions</h2>
+          <p class="section-subtitle">Based on your remaining daily targets and meal history</p>
+        </div>
+        <div class="rec-filter-bar">
+          <button class="rec-filter-btn active" data-filter="all">All</button>
+          <button class="rec-filter-btn" data-filter="breakfast">Breakfast</button>
+          <button class="rec-filter-btn" data-filter="lunch">Lunch</button>
+          <button class="rec-filter-btn" data-filter="dinner">Dinner</button>
+          <button class="rec-filter-btn" data-filter="snack">Snack</button>
+        </div>
+        <div id="remaining-summary" class="remaining-summary"></div>
+        <div id="recommendations-list" class="recommendations-list">
+          <p class="empty-state">Log some meals first to get personalized suggestions.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Meal</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="edit-items" id="edit-items"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="delete-meal-btn">Delete Meal</button>
+        <button class="btn btn-primary" id="save-edit-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="nutrition-db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

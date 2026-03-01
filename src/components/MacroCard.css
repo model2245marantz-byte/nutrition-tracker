@@ -1,0 +1,47 @@
+.macro-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.macro-card.macro-over .macro-current {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.macro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.macro-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.macro-values {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.macro-current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}

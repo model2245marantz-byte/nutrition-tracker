@@ -1,0 +1,100 @@
+.meal-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.meal-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.meal-type-badge {
+  display: inline-block;
+  background: var(--primary-bg);
+  color: var(--primary);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.meal-time {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.meal-delete-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.meal-delete-btn:hover {
+  color: var(--danger);
+}
+
+.meal-confirm {
+  display: flex;
+  gap: 6px;
+}
+
+.meal-description {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.meal-items {
+  list-style: none;
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.meal-items li {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--bg);
+}
+
+.meal-items li:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  flex: 1;
+}
+
+.item-cals {
+  font-weight: 500;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.meal-macros {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.macro-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.macro-pill.cal { background: #fef3c7; color: #92400e; }
+.macro-pill.pro { background: #dbeafe; color: #1e40af; }
+.macro-pill.carb { background: #ede9fe; color: #5b21b6; }
+.macro-pill.fat { background: #ffedd5; color: #9a3412; }
